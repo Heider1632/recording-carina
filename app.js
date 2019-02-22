@@ -1,12 +1,36 @@
 const express = require('express'); //make express available
 const app = express(); //invoke express
-const multer = require('multer') //use multer to upload blob data
+const multer = require('multer'); //use multer to upload blob data
 const upload = multer(); // set multer to be the upload variable (just like express, see above ( include it, then use it/set it up))
 const fs = require('fs'); //use the file system so we can save files
 const path = require('path');
-var cors = require('cors')
+var cors = require('cors');
+var pug = require('pug')
+var stylus = require('stylus')
+var nib = require('nib')
+
+function compile(str, path) {
+  return stylus(str)
+    .set('filename', path)
+    .use(nib())
+}
+app.set('views', __dirname + '/views')
+
+app.set('view engine', 'pug')
+
+//serve out any static files in our public HTML folder
+app.use(express.static('public'))
+
+
+app.use(stylus.middleware(
+  { src: __dirname + '/public'
+  , compile: compile
+  }
+))
 
 app.use(cors());
+
+
 
 app.post('/upload', upload.single('soundBlob'), function (req, res, next) {
   // console.log(req.file); // see what got uploaded
@@ -19,12 +43,8 @@ app.post('/upload', upload.single('soundBlob'), function (req, res, next) {
 })
 
 app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname + '/public/index.html'));
-
+  res.render('index', { title: 'Prueba echo recording' })
 })
-
-//serve out any static files in our public HTML folder
-app.use(express.static('public'))
 
 //makes the app listen for requests on port 3000
 app.listen(process.env.PORT || 3000, function () {
