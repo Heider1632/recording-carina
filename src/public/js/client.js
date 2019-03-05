@@ -4,6 +4,11 @@ URL = window.URL || window.webkitURL;
 	var recordButton = document.getElementById('recordButton');
 	var stopButton = document.getElementById('stopButton');
 
+	var reconociendo = false;
+	var textoFinal = '';
+	var reconocimiento = null;
+	var textoIntermedio = '';
+
 
 	var gumStream; 						//stream from getUserMedia()
 	var rec; 							//Recorder.js object
@@ -13,6 +18,17 @@ URL = window.URL || window.webkitURL;
 	var AudioContext = window.AudioContext || window.webkitAudioContext;
 	var audioContext //audio context to help us record
 
+	if (!('SpeechRecognition' in window)) {
+
+		if (!('webkitSpeechRecognition' in window)) {
+			console.log('No se logró iniciar webkitSpeechRecognition');
+		} else {
+			var reconocimiento = new window.webkitSpeechRecognition()
+		}
+
+	} else {
+		var reconocimiento = new window.SpeechRecognition()
+	}
 
 
 	function capitalizar (s) {
@@ -22,7 +38,6 @@ URL = window.URL || window.webkitURL;
 	function quebrarLinea (s) {
 		return s.replace(`/\n\n/g`, '<p></p>').replace(`/\n/g`, '<br>');
 	}
-
 
 	function startRecording() {
 		/*
@@ -79,7 +94,6 @@ URL = window.URL || window.webkitURL;
 	    	stopButton.disabled = true;
 		});
 	}
-
 
 	function stopRecording() {
 
@@ -145,51 +159,28 @@ URL = window.URL || window.webkitURL;
 	}
 
 
-
 if(bowser.name == 'Chrome'){
-
-	var reconociendo = false;
-	var textoFinal = '';
-	var reconocimiento = null;
-
-	if (!('SpeechRecognition' in window)) {
-
-		if (!('webkitSpeechRecognition' in window)) {
-			console.log('No se logró iniciar webkitSpeechRecognition');
-		} else {
-			var reconocimiento = new window.webkitSpeechRecognition()
-		}
-
-	} else {
-		var reconocimiento = new window.SpeechRecognition()
-	}
 
 	reconocimiento.continuous = true; // ideal para computador
 	reconocimiento.interimResults = true;
 	reconocimiento.lang = 'es-CO';
-	
 
 
 	recordButton.addEventListener("click", function(){
+
 		reconocimiento.start();
 
 		reconociendo = true;
 
-		startRecording();
+		//startRecording();
 
-		console.log(reconociendo);
 	});
 
 	stopButton.addEventListener("click", alFinalizarReconocimiento);
 
-	
-
 	reconocimiento.onend = alFinalizarReconocimiento();
-
 	
-
 	reconocimiento.onresult = (evento) => {
-		var textoIntermedio = '';
 		for (var i = evento.resultIndex; i < evento.results.length; ++i) {
 			if (evento.results[i].isFinal) {
 				textoFinal += event.results[i][0].transcript
@@ -201,6 +192,8 @@ if(bowser.name == 'Chrome'){
 		if (textoFinal !== '') {
 			textoFinal = capitalizar(textoFinal);
 			textoFinal = quebrarLinea(textoFinal);
+
+			console.log(textoFinal);
 		}else{
 			console.log('recibiendo...')
 		}
@@ -221,6 +214,8 @@ if(bowser.name == 'Chrome'){
 
 		reconociendo = false;
 
+		console.log("the response", textoFinal)
+
 			axios.post('/traducir', {data: textoFinal})
 			.then(response => {
 				console.log(response);
@@ -228,9 +223,9 @@ if(bowser.name == 'Chrome'){
 				console.error("error:" + err.message);
 			})
 
-		stopRecording();
-
 		reconocimiento.stop();
+
+		//stopRecording();
 
 	}
 
