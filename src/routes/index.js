@@ -8,17 +8,15 @@ const upload = multer();
 
 // Controllers
 const home = require('../controllers/home');
-const login = require('../controllers/login');
+//const login = require('../controllers/login');
 
 // Helpers
-const {
-  isAuthenticated
-} = require('../helpers/auth');
+//const { isAuthenticated } = require('../helpers/auth');
 
 module.exports = app => {
 
-  router.get('/', isAuthenticated, home.index);
-  router.post('/traducir', isAuthenticated, home.translate)
+  router.get('/', home.index);
+  router.post('/traducir', home.translate)
   router.post('/subir', upload.single('soundBlob'), (req, res, next) => {
     //console.log(req.file); // see what got uploaded
     
@@ -29,8 +27,8 @@ module.exports = app => {
 
     
   });
-  router.get('/login', login.index);
-  router.post('/login', login.login)
+  //router.get('/login', login.index);
+  //router.post('/login', login.login)
 
   app.use(router);
 

@@ -9,7 +9,7 @@ ctrl.index = (req, res) => {
 
 ctrl.translate = async (req, res) => {
 
-  var datos  = req.body.data;
+  var datos = req.body.data;
 
   try {
 
