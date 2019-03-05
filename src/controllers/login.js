@@ -7,8 +7,6 @@ ctrl.index = async (req, res) => {
 };
 
 ctrl.login = function (req, res) {
-  // read cookies
-    console.log(req.cookies)
 
     let options = {
         maxAge: 60 * 60 * 24 * 7, // 1 week

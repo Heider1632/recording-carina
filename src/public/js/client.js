@@ -1,101 +1,10 @@
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
 
-var reconociendo = false;
-var textoFinal = '';
-var reconocimiento = null;
-
-var inputText = $('#inputText');
-
-if(bowser.name == 'Chrome'){
-	if (!('SpeechRecognition' in window)) {
-
-		if (!('webkitSpeechRecognition' in window)) {
-			console.log('No se logró iniciar webkitSpeechRecognition');
-		} else {
-			var reconocimiento = new window.webkitSpeechRecognition()
-		}
-
-	} else {
-		var reconocimiento = new window.SpeechRecognition()
-	}
+	var recordButton = document.getElementById('recordButton');
+	var stopButton = document.getElementById('stopButton');
 
 
-	$('#recordButton').click(function(){
-		reconocimiento.start();
-
-		reconociendo = true;
-
-		console.log(reconociendo);
-	});
-
-	$('#stopButton').click(alFinalizarReconocimiento);
-
-	reconocimiento.continuous = true; // ideal para computador
-	reconocimiento.interimResults = true;
-	reconocimiento.lang = 'es-CO';
-
-	reconocimiento.onend = alFinalizarReconocimiento();
-
-	function capitalizar (s) {
-		return s.replace(`/\S/`, (m) => m.toUpperCase());
-	}
-
-	function quebrarLinea (s) {
-		return s.replace(`/\n\n/g`, '<p></p>').replace(`/\n/g`, '<br>');
-	}
-
-	reconocimiento.onresult = (evento) => {
-		var textoIntermedio = '';
-		for (var i = evento.resultIndex; i < evento.results.length; ++i) {
-			if (evento.results[i].isFinal) {
-				textoFinal += event.results[i][0].transcript
-			} else {
-				textoIntermedio += event.results[i][0].transcript
-			}
-		}
-
-		if (textoFinal !== '') {
-			textoFinal = capitalizar(textoFinal);
-			textoFinal = quebrarLinea(textoFinal);
-		}
-
-		// console.log('alResultadoDelReconocimiento')
-	}
-
-	reconocimiento.onerror = (evento) => {
-		if (evento.error === 'no-speech') {
-			console.err(event.err);
-		}
-		if (evento.error === 'audio-capture') {
-			console.err(event.err);
-		}
-	}
-
-	function alFinalizarReconocimiento(){
-
-		reconociendo = false;
-
-		if(textoFinal === ''){
-
-			console.log('esperando');
-
-		}else{
-
-			axios.post('/traducir', {data: textoFinal})
-			.then(response => {
-				inputText.innerHTML(response);
-			}).catch(err => {
-				console.error("error:" + err.message);
-			})
-		}
-
-		reconocimiento.stop();
-
-	}
-
-
-}else if(bowser.name == 'Safari'){
 	var gumStream; 						//stream from getUserMedia()
 	var rec; 							//Recorder.js object
 	var input; 							//MediaStreamAudioSourceNode we'll be recording
@@ -106,14 +15,16 @@ if(bowser.name == 'Chrome'){
 
 
 
-	//add events to those 2 buttons
-	recordButton.addEventListener("click", startRecording);
-	stopButton.addEventListener("click", stopRecording);
-	pauseButton.addEventListener("click", pauseRecording);
+	function capitalizar (s) {
+		return s.replace(`/\S/`, (m) => m.toUpperCase());
+	}
+
+	function quebrarLinea (s) {
+		return s.replace(`/\n\n/g`, '<p></p>').replace(`/\n/g`, '<br>');
+	}
+
 
 	function startRecording() {
-		console.log("recordButton clicked");
-
 		/*
 			Simple constraints object, for more advanced audio features see
 			https://addpipe.com/blog/audio-constraints-getusermedia/
@@ -127,7 +38,6 @@ if(bowser.name == 'Chrome'){
 
 		recordButton.disabled = true;
 		stopButton.disabled = false;
-		pauseButton.disabled = false
 
 		/*
 	    	We're using the standard promise based getUserMedia()
@@ -167,32 +77,16 @@ if(bowser.name == 'Chrome'){
 		  	//enable the record button if getUserMedia() fails
 	    	recordButton.disabled = false;
 	    	stopButton.disabled = true;
-	    	pauseButton.disabled = true
 		});
 	}
 
-	function pauseRecording(){
-		if (rec.recording){
-			//pause
-			rec.stop();
-			pauseButton.innerHTML="Resume";
-		}else{
-			//resume
-			rec.record()
-			pauseButton.innerHTML="Pause";
-
-		}
-	}
 
 	function stopRecording() {
 
 		//disable the stop button, enable the record too allow for new recordings
 		stopButton.disabled = true;
 		recordButton.disabled = false;
-		pauseButton.disabled = true;
 
-		//reset button just in case the recording is stopped while paused
-		pauseButton.innerHTML="Pause";
 
 		//tell the recorder to stop the recording
 		rec.stop();
@@ -240,7 +134,7 @@ if(bowser.name == 'Chrome'){
 			  };
 			  var fd=new FormData();
 			  fd.append("soundBlob",blob, originalname);
-			  xhr.open("POST","/upload",true);
+			  xhr.open("POST","/subir",true);
 			  xhr.send(fd);
 		})
 		li.appendChild(document.createTextNode (" "))//add a space in between
@@ -249,4 +143,102 @@ if(bowser.name == 'Chrome'){
 		//add the li element to the ol
 		recordingsList.appendChild(li);
 	}
+
+
+
+if(bowser.name == 'Chrome'){
+
+	var reconociendo = false;
+	var textoFinal = '';
+	var reconocimiento = null;
+
+	if (!('SpeechRecognition' in window)) {
+
+		if (!('webkitSpeechRecognition' in window)) {
+			console.log('No se logró iniciar webkitSpeechRecognition');
+		} else {
+			var reconocimiento = new window.webkitSpeechRecognition()
+		}
+
+	} else {
+		var reconocimiento = new window.SpeechRecognition()
+	}
+
+	reconocimiento.continuous = true; // ideal para computador
+	reconocimiento.interimResults = true;
+	reconocimiento.lang = 'es-CO';
+	
+
+
+	recordButton.addEventListener("click", function(){
+		reconocimiento.start();
+
+		reconociendo = true;
+
+		startRecording();
+
+		console.log(reconociendo);
+	});
+
+	stopButton.addEventListener("click", alFinalizarReconocimiento);
+
+	
+
+	reconocimiento.onend = alFinalizarReconocimiento();
+
+	
+
+	reconocimiento.onresult = (evento) => {
+		var textoIntermedio = '';
+		for (var i = evento.resultIndex; i < evento.results.length; ++i) {
+			if (evento.results[i].isFinal) {
+				textoFinal += event.results[i][0].transcript
+			} else {
+				textoIntermedio += event.results[i][0].transcript
+			}
+		}
+
+		if (textoFinal !== '') {
+			textoFinal = capitalizar(textoFinal);
+			textoFinal = quebrarLinea(textoFinal);
+		}else{
+			console.log('recibiendo...')
+		}
+
+		// console.log('alResultadoDelReconocimiento')
+	}
+
+	reconocimiento.onerror = (evento) => {
+		if (evento.error === 'no-speech') {
+			console.err(event.err);
+		}
+		if (evento.error === 'audio-capture') {
+			console.err(event.err);
+		}
+	}
+
+	function alFinalizarReconocimiento(){
+
+		reconociendo = false;
+
+			axios.post('/traducir', {data: textoFinal})
+			.then(response => {
+				console.log(response);
+			}).catch(err => {
+				console.error("error:" + err.message);
+			})
+
+		stopRecording();
+
+		reconocimiento.stop();
+
+	}
+
+
+}else if(bowser.name == 'Safari'){
+
+	//add events to those 2 buttons
+	recordButton.addEventListener("click", startRecording);
+	stopButton.addEventListener("click", stopRecording);
+	
 }
